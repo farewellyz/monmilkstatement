@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>รายรับ-รายจ่าย Family</title>
+    <!-- Outfit for numbers/English, Prompt for Thai -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- 1. LOGIN / USER SELECTION SCREEN OVERLAY (First-time user selection) -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <div class="login-logo">
+                <svg viewBox="0 0 24 24" width="60" height="60" class="logo-svg">
+                    <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/>
+                </svg>
+            </div>
+            <h2>บัญชีครอบครัว</h2>
+            <p class="login-subtitle">กรุณาเลือกผู้ใช้งานเพื่อเข้าสู่ระบบ</p>
+            
+            <div class="user-cards">
+                <button class="user-card-btn mon" data-user="mon">
+                    <div class="user-avatar">M</div>
+                    <span>ม่อน (Mon)</span>
+                </button>
+                <button class="user-card-btn milk" data-user="milk">
+                    <div class="user-avatar">K</div>
+                    <span>มิ้ว (Milk)</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. MAIN APP CONTENT CONTAINER -->
+    <div id="appLayout" class="app-layout hidden">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-inner">
+                <div class="greeting-box">
+                    <span class="greeting-hello">สวัสดี 👋</span>
+                    <h2 id="greetUserName" class="greeting-name">Khunanon</h2>
+                </div>
+                <div class="header-actions">
+                    <button id="btnNotify" class="notify-btn">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="currentColor" d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 4.36 6 6.92 6 10v5l-2 2v1h16v-1l-2-2z"/>
+                        </svg>
+                        <span class="notify-badge"></span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic Content Panes -->
+        <main class="pane-viewport">
+            
+            <!-- PANE 1: HOME (หน้าหลัก) -->
+            <section id="pane-home" class="view-pane active">
+                <!-- Net Balance Card -->
+                <div class="gradient-card">
+                    <div class="card-top">
+                        <span>เงินคงเหลือ</span>
+                        <button id="btnToggleBalance" class="eye-btn" aria-label="แสดง/ซ่อนยอดเงิน">
+                            <svg id="eyeOpenIcon" viewBox="0 0 24 24" width="22" height="22">
+                                <path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                            </svg>
+                            <svg id="eyeClosedIcon" class="hidden" viewBox="0 0 24 24" width="22" height="22">
+                                <path fill="currentColor" d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.82l2.92 2.92c1.51-1.26 2.7-2.89 3.44-4.74-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.72-4.72l1.63 1.63c-.62-.14-1.26-.21-1.88-.21-2.76 0-5 2.24-5 5 0 .62.07 1.26.21 1.88L8.83 15.02c-.56-.56-.96-1.25-1.18-1.99.23.05.47.08.72.08 1.66 0 3-1.34 3-3 0-.25-.03-.49-.08-.72.74.22 1.43.62 1.99 1.18z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="balance-row">
+                        <span id="txtBalanceValue" class="balance-num">฿12,580.00</span>
+                    </div>
+                </div>
+
+                <!-- Monthly Budget Card -->
+                <div class="budget-card">
+                    <div class="budget-header">
+                        <span>งบประมาณเดือนนี้</span>
+                        <strong id="txtBudgetPercent">82%</strong>
+                    </div>
+                    <!-- Custom progress bar -->
+                    <div class="progress-bar-container">
+                        <div id="elBudgetProgress" class="progress-bar-fill" style="width: 82%"></div>
+                    </div>
+                    <div class="budget-sub">
+                        <span id="txtBudgetUsageLabel">ใช้ไป ฿8,200 / ฿10,000 บาท</span>
+                    </div>
+                </div>
+
+                <!-- Stats widgets (Income vs Expense) -->
+                <div class="widgets-grid">
+                    <div class="widget-item income-w">
+                        <span class="widget-label">รายรับ</span>
+                        <h3 id="txtHomeIncome">฿18,500.00</h3>
+                        <div class="widget-count"><span id="txtHomeIncomeCount">5</span> รายการ</div>
+                    </div>
+                    <div class="widget-item expense-w">
+                        <span class="widget-label">รายจ่าย</span>
+                        <h3 id="txtHomeExpense">฿5,920.00</h3>
+                        <div class="widget-count"><span id="txtHomeExpenseCount">18</span> รายการ</div>
+                    </div>
+                </div>
+
+                <!-- Action Button Shortcuts -->
+                <div class="shortcuts-row">
+                    <button class="shortcut-btn inc-btn" data-type="income">
+                        <span class="btn-circle-icon">+</span>
+                        เพิ่มรายรับ
+                    </button>
+                    <button class="shortcut-btn exp-btn" data-type="expense">
+                        <span class="btn-circle-icon">-</span>
+                        เพิ่มรายจ่าย
+                    </button>
+                </div>
+
+                <!-- Recent Transactions List -->
+                <div class="home-section">
+                    <div class="section-header">
+                        <h3>รายการล่าสุด</h3>
+                        <button id="btnSeeAllHistory" class="text-link">ดูทั้งหมด ></button>
+                    </div>
+                    
+                    <ul id="homeTransactionList" class="premium-tx-list">
+                        <!-- Dynamic items -->
+                    </ul>
+                </div>
+            </section>
+
+            <!-- PANE 2: SUMMARY (สรุป) -->
+            <section id="pane-summary" class="view-pane">
+                <div class="summary-top-card">
+                    <div class="tab-filters">
+                        <button class="sub-tab-btn active" data-subtab="combined">ภาพรวม</button>
+                        <button class="sub-tab-btn" data-subtab="incomes">รายรับ</button>
+                        <button class="sub-tab-btn" data-subtab="expenses">รายจ่าย</button>
+                    </div>
+
+                    <!-- Month Picker -->
+                    <div class="date-navigator">
+                        <button id="btnPrevMonth" class="nav-arrow">&lt;</button>
+                        <span id="txtSelectedMonthLabel" class="selected-date">กรกฎาคม 2567</span>
+                        <button id="btnNextMonth" class="nav-arrow">&gt;</button>
+                    </div>
+                    
+                    <div class="summary-totals-card">
+                        <span class="totals-label">ยอดคงเหลือ</span>
+                        <h1 id="txtSummaryBalance">฿12,580.00</h1>
+                        
+                        <div class="split-stats">
+                            <div class="split-w income">
+                                <span>รายรับรวม</span>
+                                <h3 id="txtSummaryIncome">฿18,500.00</h3>
+                            </div>
+                            <div class="split-divider"></div>
+                            <div class="split-w expense">
+                                <span>รายจ่ายรวม</span>
+                                <h3 id="txtSummaryExpense">฿5,920.00</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Auto Insight -->
+                <div id="summaryInsightBox" class="insight-box hidden">
+                    <span class="insight-icon">💡</span>
+                    <p id="insightText"></p>
+                </div>
+
+                <!-- Category Breakdown Donut Chart -->
+                <div id="categoryBreakdownCard" class="chart-card category-breakdown-card">
+                    <h4 id="categoryBreakdownTitle" class="chart-title">สัดส่วนรายจ่ายตามหมวดหมู่</h4>
+                    <div class="donut-row">
+                        <div class="donut-wrap">
+                            <div id="donutChart" class="donut-chart"></div>
+                            <div class="donut-center">
+                                <span id="donutCenterLabel">฿0</span>
+                            </div>
+                        </div>
+                        <ul id="donutLegend" class="donut-legend">
+                            <!-- Dynamic legend items -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Custom Bar Chart Card -->
+                <div class="chart-card">
+                    <h4 class="chart-title">กราฟรายรับ - รายจ่าย</h4>
+                    <div class="chart-legend">
+                        <span class="legend-item inc"><span class="legend-color"></span> รายรับ</span>
+                        <span class="legend-item exp"><span class="legend-color"></span> รายจ่าย</span>
+                    </div>
+                    
+                    <!-- Flexible CSS bar chart container -->
+                    <div class="chart-container">
+                        <div class="chart-y-axis">
+                            <span>Max</span>
+                            <span>Mid</span>
+                            <span>0</span>
+                        </div>
+                        <div id="chartBars" class="chart-bars-viewport">
+                            <!-- Columns generated dynamically -->
+                            <div class="chart-column">
+                                <div class="bars-pair">
+                                    <div class="bar inc" style="height: 60%"></div>
+                                    <div class="bar exp" style="height: 30%"></div>
+                                </div>
+                                <span class="col-label">สัปดาห์ 1</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other user summary details -->
+                <div class="summary-compare-box">
+                    <h4 class="section-title">สรุปเปรียบเทียบทั้งครอบครัว</h4>
+                    <ul id="summaryCompareList" class="compare-list">
+                        <!-- Dynamic compare stats -->
+                    </ul>
+                </div>
+            </section>
+
+            <!-- PANE 3: HISTORY (ประวัติ) -->
+            <section id="pane-history" class="view-pane">
+                <div class="history-search-card">
+                    <h2>ประวัติรายการ</h2>
+                    <div class="search-bar-row">
+                        <div class="search-input-wrapper">
+                            <svg viewBox="0 0 24 24" width="20" height="20" class="search-icon"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                            <input type="text" id="inputSearchQuery" placeholder="ค้นหารายการ..." autocomplete="off">
+                        </div>
+                        <button id="btnFilterHistory" class="filter-btn">
+                            <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h6V7h-6V5h-2v6h2V9z"/></svg>
+                        </button>
+                    </div>
+                    
+                    <div class="filter-pills-row">
+                        <button class="filter-pill active" data-filter="all">ทั้งหมด</button>
+                        <button class="filter-pill" data-filter="income">รายรับ</button>
+                        <button class="filter-pill" data-filter="expense">รายจ่าย</button>
+                    </div>
+                </div>
+
+                <div id="historyGroupContainer" class="history-groups">
+                    <!-- Groups sorted by Date -->
+                </div>
+            </section>
+
+            <!-- PANE 4: SETTINGS (ตั้งค่า) -->
+            <section id="pane-settings" class="view-pane">
+                <div class="settings-profile-card">
+                    <div class="profile-avatar-large" id="avatarLetter">M</div>
+                    <div class="profile-details">
+                        <h3 id="txtProfileName">Khunanon</h3>
+                        <span id="txtProfileEmail">user@gmail.com</span>
+                    </div>
+                </div>
+
+                <!-- Settings Lists -->
+                <div class="settings-group">
+                    <span class="settings-title">ทั่วไป</span>
+                    
+                    <div class="setting-item" id="btnEditBudget">
+                        <div class="setting-item-left">
+                            <div class="setting-icon bg-blue">💰</div>
+                            <div class="setting-info">
+                                <strong>งบประมาณรายเดือน</strong>
+                                <span id="txtSettingBudget">10,000 บาท/เดือน</span>
+                            </div>
+                        </div>
+                        <span class="chevron-right">&gt;</span>
+                    </div>
+                    
+                    <div class="setting-item" id="btnManageCategories">
+                        <div class="setting-item-left">
+                            <div class="setting-icon bg-pink">📂</div>
+                            <div class="setting-info">
+                                <strong>หมวดหมู่รายการ</strong>
+                                <span>จัดการไอคอนและป้ายหมวดหมู่</span>
+                            </div>
+                        </div>
+                        <span class="chevron-right">&gt;</span>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <span class="settings-title">อื่นๆ</span>
+                    
+                    <div class="setting-item" id="btnReloadData">
+                        <div class="setting-item-left">
+                            <div class="setting-icon bg-green">🔄</div>
+                            <div class="setting-info">
+                                <strong>รีเฟรชข้อมูล</strong>
+                                <span>ดึงข้อมูลจาก Google Sheets ใหม่</span>
+                            </div>
+                        </div>
+                        <span class="chevron-right">&gt;</span>
+                    </div>
+
+                    <div class="setting-item logout" id="btnLogout">
+                        <div class="setting-item-left">
+                            <div class="setting-icon bg-red">🚪</div>
+                            <div class="setting-info">
+                                <strong>ออกจากระบบ / เปลี่ยนบัญชี</strong>
+                                <span>สลับผู้ใช้งานหรือตั้งค่าผู้ใช้เริ่มต้นใหม่</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-target="home">
+                <svg viewBox="0 0 24 24" width="24" height="24" class="nav-svg"><path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                <span>หน้าหลัก</span>
+            </button>
+            <button class="nav-item" data-target="summary">
+                <svg viewBox="0 0 24 24" width="24" height="24" class="nav-svg"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+                <span>สรุป</span>
+            </button>
+            <button id="btnFloatingAdd" class="nav-item add-fab" aria-label="เพิ่มรายการ">
+                <div class="fab-circle">+</div>
+            </button>
+            <button class="nav-item" data-target="history">
+                <svg viewBox="0 0 24 24" width="24" height="24" class="nav-svg"><path fill="currentColor" d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                <span>ประวัติ</span>
+            </button>
+            <button class="nav-item" data-target="settings">
+                <svg viewBox="0 0 24 24" width="24" height="24" class="nav-svg"><path fill="currentColor" d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+                <span>ตั้งค่า</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- 3. ADD TRANSACTION SLIDE-UP BOTTOM SHEET -->
+    <div id="addTransactionSheet" class="bottom-sheet-overlay">
+        <div class="bottom-sheet">
+            <div class="sheet-header">
+                <div class="drag-handle"></div>
+                <h3 id="formActionTitle">เพิ่มรายการ</h3>
+                <button id="btnCloseSheet" class="close-btn" aria-label="ปิด">
+                    <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
+            </div>
+            
+            <form id="transactionForm" class="sheet-form">
+                <input type="hidden" id="formTxId" value=""> <!-- hidden field for Edit action -->
+                
+                <!-- Type Segmented Tabs (+ / - / ->) -->
+                <div class="form-type-segmented">
+                    <label class="form-type-tab inc">
+                        <input type="radio" name="formType" value="income">
+                        <span>รายรับ</span>
+                    </label>
+                    <label class="form-type-tab exp active">
+                        <input type="radio" name="formType" value="expense" checked>
+                        <span>รายจ่าย</span>
+                    </label>
+                </div>
+
+                <!-- Input Amount -->
+                <div class="form-group">
+                    <label for="formInputAmount">จำนวนเงิน (฿)</label>
+                    <input type="number" step="any" id="formInputAmount" placeholder="0.00" required inputmode="decimal">
+                </div>
+
+                <!-- Category Selector -->
+                <div class="form-group">
+                    <label for="formInputCategory">หมวดหมู่</label>
+                    <div class="custom-select-wrapper">
+                        <select id="formInputCategory" required>
+                            <!-- Options populated dynamically based on income/expense -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Input Date -->
+                <div class="form-group">
+                    <label for="formInputDate">วันที่ทำรายการ</label>
+                    <input type="datetime-local" id="formInputDate" required>
+                </div>
+
+                <!-- Input Note/Memo -->
+                <div class="form-group">
+                    <label for="formInputNote">โน้ต (ถ้ามี)</label>
+                    <input type="text" id="formInputNote" placeholder="ระบุรายละเอียดเพิ่มเติม..." autocomplete="off">
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="btnSubmitForm" class="form-submit-btn">
+                    <span>บันทึกรายการ</span>
+                    <div class="btn-spinner hidden"></div>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3b. CATEGORY MANAGER SLIDE-UP BOTTOM SHEET -->
+    <div id="categoryManagerSheet" class="bottom-sheet-overlay">
+        <div class="bottom-sheet">
+            <div class="sheet-header">
+                <div class="drag-handle"></div>
+                <h3>จัดการหมวดหมู่</h3>
+                <button id="btnCloseCategoryManager" class="close-btn" aria-label="ปิด">
+                    <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
+            </div>
+
+            <div class="cat-type-toggle">
+                <button class="cat-type-tab active" data-cattype="expense">รายจ่าย</button>
+                <button class="cat-type-tab" data-cattype="income">รายรับ</button>
+            </div>
+
+            <ul id="categoryManagerList" class="cat-manager-list">
+                <!-- Dynamic items -->
+            </ul>
+
+            <div class="add-category-row">
+                <input type="text" id="inputNewCategory" placeholder="ชื่อหมวดหมู่ใหม่..." autocomplete="off">
+                <button id="btnAddCategory" class="add-category-btn">เพิ่ม</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. TRANSACTION DETAIL & ACTION MODAL -->
+    <div id="txDetailModal" class="bottom-sheet-overlay">
+        <div class="bottom-sheet detail-sheet">
+            <div class="sheet-header">
+                <div class="drag-handle"></div>
+                <h3>รายละเอียดรายการ</h3>
+                <button id="btnCloseDetailModal" class="close-btn" aria-label="ปิด">
+                    <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
+            </div>
+            
+            <div class="detail-content">
+                <div class="detail-category-header">
+                    <div class="detail-avatar" id="txtDetailIcon">🍔</div>
+                    <h2 id="txtDetailCategoryName">อาหาร</h2>
+                    <h1 id="txtDetailAmount" class="expense">-฿60.00</h1>
+                </div>
+                
+                <div class="detail-info-list">
+                    <div class="detail-row">
+                        <span>หมวดหมู่</span>
+                        <strong id="txtDetailCategorySub">อาหาร</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span>วันที่</span>
+                        <strong id="txtDetailDate">2 กรกฎาคม 2567 12:10</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span>โน้ต</span>
+                        <strong id="txtDetailNote">ก๋วยเตี๋ยว</strong>
+                    </div>
+                </div>
+
+                <!-- Edit and Delete buttons -->
+                <div class="detail-actions">
+                    <button id="btnEditTransaction" class="action-btn edit">
+                        <span>แก้ไข</span>
+                    </button>
+                    <button id="btnDeleteTransaction" class="action-btn delete">
+                        <span>ลบรายการ</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. TOAST FEEDBACK ALERT -->
+    <div id="toast" class="toast hidden">บันทึกข้อมูลเรียบร้อยแล้ว</div>
+
+    <!-- 6. CUSTOM DIALOG (replaces native confirm/prompt/alert which don't work in WebView) -->
+    <div id="customDialogOverlay" class="dialog-overlay">
+        <div class="dialog-box">
+            <h3 id="dialogTitle" class="dialog-title">ยืนยันการทำรายการ</h3>
+            <p id="dialogMessage" class="dialog-message"></p>
+            <input id="dialogInput" class="dialog-input hidden" type="text" inputmode="decimal" />
+            <div class="dialog-actions">
+                <button id="dialogCancelBtn" class="dialog-btn cancel">ยกเลิก</button>
+                <button id="dialogConfirmBtn" class="dialog-btn confirm">ตกลง</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
