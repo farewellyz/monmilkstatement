@@ -173,7 +173,10 @@
 
                 <!-- Category Breakdown Donut Chart -->
                 <div id="categoryBreakdownCard" class="chart-card category-breakdown-card">
-                    <h4 id="categoryBreakdownTitle" class="chart-title">สัดส่วนรายจ่ายตามหมวดหมู่</h4>
+                    <div class="chart-card-header">
+                        <h4 id="categoryBreakdownTitle" class="chart-title">สัดส่วนรายจ่ายตามหมวดหมู่</h4>
+                        <button id="btnOpenGroupManager" class="icon-btn-sm" aria-label="ตั้งค่าหมวดหมู่วงกลม">⚙️</button>
+                    </div>
                     <div class="donut-row">
                         <div class="donut-wrap">
                             <div id="donutChart" class="donut-chart"></div>
@@ -424,6 +427,30 @@
             <div class="add-category-row">
                 <input type="text" id="inputNewCategory" placeholder="ชื่อหมวดหมู่ใหม่..." autocomplete="off">
                 <button id="btnAddCategory" class="add-category-btn">เพิ่ม</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3c. GROUP MANAGER (สำหรับกราฟโดนัท) SLIDE-UP BOTTOM SHEET -->
+    <div id="groupManagerSheet" class="bottom-sheet-overlay">
+        <div class="bottom-sheet">
+            <div class="sheet-header">
+                <div class="drag-handle"></div>
+                <h3>ตั้งค่าหมวดหมู่วงกลม</h3>
+                <button id="btnCloseGroupManager" class="close-btn" aria-label="ปิด">
+                    <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
+            </div>
+
+            <p class="group-manager-hint">สร้างกลุ่ม แล้วเพิ่มชื่อรายการที่จะให้นับรวมเข้ากลุ่มนั้น เช่น กลุ่ม "อาหาร" ใส่ ข้าว, ขนม, ขนมปัง</p>
+
+            <div id="groupManagerList" class="group-manager-list">
+                <!-- Dynamic group cards -->
+            </div>
+
+            <div class="add-category-row">
+                <input type="text" id="inputNewGroup" placeholder="ชื่อกลุ่มใหม่ เช่น อาหาร" autocomplete="off">
+                <button id="btnAddGroup" class="add-category-btn">สร้างกลุ่ม</button>
             </div>
         </div>
     </div>

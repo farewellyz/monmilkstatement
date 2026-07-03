@@ -42,6 +42,18 @@ function saveCategories() {
 }
 loadCategories();
 
+let customGroups = {}; // { "อาหาร": ["ข้าว","ขนม","ขนมปัง"], ... } — ตั้งเองผ่านปุ่ม ⚙️ บนกราฟโดนัท
+function loadGroups() {
+    try {
+        const saved = JSON.parse(localStorage.getItem("category_groups") || "null");
+        if (saved && typeof saved === "object") customGroups = saved;
+    } catch (e) { customGroups = {}; }
+}
+function saveGroups() {
+    localStorage.setItem("category_groups", JSON.stringify(customGroups));
+}
+loadGroups();
+
 // ─── STATE ──────────────────────────────────────────────────────────────────
 let state = {
     user: null,            // "mon" or "milk"
@@ -198,6 +210,17 @@ function setupEventListeners() {
     document.getElementById("btnAddCategory").addEventListener("click", addCategoryFromInput);
     document.getElementById("inputNewCategory").addEventListener("keydown", (e) => {
         if (e.key === "Enter") { e.preventDefault(); addCategoryFromInput(); }
+    });
+
+    // Group manager (สำหรับกราฟโดนัท)
+    document.getElementById("btnOpenGroupManager").addEventListener("click", openGroupManager);
+    document.getElementById("btnCloseGroupManager").addEventListener("click", closeGroupManager);
+    document.getElementById("groupManagerSheet").addEventListener("click", (e) => {
+        if (e.target === document.getElementById("groupManagerSheet")) closeGroupManager();
+    });
+    document.getElementById("btnAddGroup").addEventListener("click", addGroupFromInput);
+    document.getElementById("inputNewGroup").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); addGroupFromInput(); }
     });
 }
 
@@ -403,6 +426,49 @@ function renderSummaryPane() {
     renderFamilyCompare(year, month, filter);
 }
 
+// ─── AUTO-CATEGORIZATION ──────────────────────────────────────────────────────
+// รายการเก่าจำนวนมากถูกบันทึกด้วยชื่อสินค้า/ร้านค้าแบบพิมพ์เอง (เช่น "แกร็บ", "ก๋วยเตี๋ยว")
+// แทนที่จะเป็นหมวดหมู่มาตรฐาน ฟังก์ชันนี้เดาหมวดหมู่ที่ใกล้เคียงที่สุดจากคำสำคัญ
+// เพื่อให้กราฟโดนัทจัดกลุ่มได้อย่างมีความหมาย แทนที่จะแตกเป็นเสี้ยวเล็กๆ นับสิบ
+const AUTO_CATEGORY_KEYWORDS = {
+    "อาหาร": ["ข้าว","ก๋วยเตี๋ยว","ต้ม","ผัด","แกง","หมู","ไก่","เนื้อ","ปลา","ซูชิ","อาหาร","เที่ยง","มื้อเย็น","มื้อเช้า","มื้อ","ร้านอาหาร","บุฟเฟ่ต์","ส้มตำ","ก๋วยจั๊บ","เตี๋ยว"],
+    "เครื่องดื่ม": ["กาแฟ","ชานม","น้ำอัดลม","ชาไทย","โกโก้","สมูทตี้","เครื่องดื่ม","ชาเขียว"],
+    "ขนมของหวาน": ["ขนม","เค้ก","ไอศกรีม","โมจิ","พุดดิ้ง","ของหวาน","บิงซู","คุกกี้"],
+    "ของใช้": ["หวี","สบู่","แชมพู","กระดาษทิชชู่","ของใช้","ผงซักฟอก","น้ำยา"],
+    "เสื้อผ้า": ["เสื้อ","กางเกง","ชุดนอน","บรา","กระโปรง","รองเท้า","ผ้า","ช้อปปิ้ง"],
+    "ค่าเดินทาง": ["แกร็บ","grab","วินมอไซค์","แท็กซี่","taxi","รถไฟฟ้า","bts","mrt","ค่าเดินทาง","รถตู้","รถทัวร์","วิน"],
+    "ค่าน้ำมัน": ["น้ำมัน","ปั๊มน้ำมัน","เชื้อเพลิง"],
+    "บิล/ค่าน้ำไฟ": ["ค่าน้ำ","ค่าไฟ","ค่าเน็ต","อินเทอร์เน็ต","ค่ามือถือ","บิล","ค่าโทรศัพท์"],
+    "ความงาม": ["เล็บ","ทำผม","สปา","ความงาม","แต่งหน้า","เสริมสวย"],
+    "สุขภาพ": ["หมอ","ค่ายา","โรงพยาบาล","ประกัน","คลินิก"],
+    "บันเทิง": ["หนัง","เกม","คาราโอเกะ","เที่ยว","คอนเสิร์ต"],
+    "ของขวัญ": ["ของขวัญ","gift"],
+    "เงินเดือน": ["เงินเดือน","salary"],
+    "โบนัส": ["โบนัส","bonus"],
+    "รายได้พิเศษ": ["รายได้พิเศษ","พาร์ทไทม์","ฟรีแลนซ์"]
+};
+
+function classifyItem(rawItem) {
+    if (!rawItem) return "อื่นๆ";
+    const trimmed = String(rawItem).trim();
+    const lower = trimmed.toLowerCase();
+
+    // 1) ตรงกับหมวดหมู่มาตรฐานเป๊ะๆ อยู่แล้ว ใช้เลย
+    if (CATEGORIES.income.includes(trimmed) || CATEGORIES.expense.includes(trimmed)) return trimmed;
+
+    // 2) ตรงกับกลุ่มที่ผู้ใช้ตั้งเอง (สำคัญสุด เพราะผู้ใช้กำหนดเอง)
+    for (const [group, items] of Object.entries(customGroups)) {
+        if ((items || []).some(k => lower === k.toLowerCase() || lower.includes(k.toLowerCase()))) return group;
+    }
+
+    // 3) เดาแบบ built-in keyword fallback
+    for (const [cat, keywords] of Object.entries(AUTO_CATEGORY_KEYWORDS)) {
+        if (keywords.some(k => lower.includes(k.toLowerCase()))) return cat;
+    }
+
+    return "อื่นๆ";
+}
+
 // ─── CATEGORY BREAKDOWN DONUT ────────────────────────────────────────────────
 const DONUT_COLORS = ["#2563eb","#f43f5e","#f59e0b","#10b981","#8b5cf6","#06b6d4","#ec4899","#84cc16","#f97316","#6366f1"];
 
@@ -419,7 +485,7 @@ function renderCategoryBreakdown(txs, filter) {
     const relevant = txs.filter(t => useIncome ? t.amount > 0 : t.amount < 0);
     const sums = {};
     relevant.forEach(t => {
-        const cat = t.item || "อื่นๆ";
+        const cat = classifyItem(t.item);
         sums[cat] = (sums[cat] || 0) + Math.abs(t.amount);
     });
 
@@ -924,6 +990,111 @@ function addCategoryFromInput() {
     input.value = "";
     renderCategoryManagerList();
     showToast("✅ เพิ่มหมวดหมู่แล้ว");
+}
+
+// ─── GROUP MANAGER (สำหรับกราฟโดนัท) ─────────────────────────────────────────
+function openGroupManager() {
+    renderGroupManagerList();
+    document.getElementById("groupManagerSheet").classList.add("open");
+    document.body.style.overflow = "hidden";
+}
+
+function closeGroupManager() {
+    document.getElementById("groupManagerSheet").classList.remove("open");
+    document.body.style.overflow = "";
+    renderSummaryPane(); // อัพเดตกราฟโดนัทให้ตรงกับกลุ่มล่าสุด
+}
+
+function renderGroupManagerList() {
+    const container = document.getElementById("groupManagerList");
+    const groupNames = Object.keys(customGroups);
+
+    if (groupNames.length === 0) {
+        container.innerHTML = `<p class="tx-empty">ยังไม่มีกลุ่ม ลองสร้างกลุ่มแรกด้านล่างได้เลย</p>`;
+        return;
+    }
+
+    container.innerHTML = groupNames.map(g => `
+        <div class="group-card">
+            <div class="group-card-header">
+                <span class="group-card-name">${CAT_ICONS[g] || "📁"} ${g}</span>
+                <button class="group-delete-btn" data-group="${g}" aria-label="ลบกลุ่ม ${g}">✕</button>
+            </div>
+            <div class="group-chip-list">
+                ${(customGroups[g] || []).map(item => `
+                    <span class="group-chip">${item}<button class="chip-remove" data-group="${g}" data-item="${item}">✕</button></span>
+                `).join("") || `<span class="group-chip-empty">ยังไม่มีรายการในกลุ่มนี้</span>`}
+            </div>
+            <div class="group-add-item-row">
+                <input type="text" class="group-item-input" data-group="${g}" placeholder="เพิ่มรายการ เช่น ข้าว">
+                <button class="group-item-add-btn" data-group="${g}">+</button>
+            </div>
+        </div>
+    `).join("");
+
+    container.querySelectorAll(".group-delete-btn").forEach(btn => {
+        btn.addEventListener("click", () => deleteGroup(btn.dataset.group));
+    });
+    container.querySelectorAll(".chip-remove").forEach(btn => {
+        btn.addEventListener("click", () => removeItemFromGroup(btn.dataset.group, btn.dataset.item));
+    });
+    container.querySelectorAll(".group-item-add-btn").forEach(btn => {
+        btn.addEventListener("click", () => addItemToGroupFromInput(btn.dataset.group));
+    });
+    container.querySelectorAll(".group-item-input").forEach(input => {
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") { e.preventDefault(); addItemToGroupFromInput(input.dataset.group); }
+        });
+    });
+}
+
+async function deleteGroup(group) {
+    const ok = await customConfirm(`ต้องการลบกลุ่ม "${group}" ใช่หรือไม่? (รายการที่เคยอยู่ในกลุ่มนี้จะกลับไปเดาแบบอัตโนมัติแทน)`, { title: "ลบกลุ่ม", danger: true, confirmText: "ลบ" });
+    if (!ok) return;
+    delete customGroups[group];
+    saveGroups();
+    renderGroupManagerList();
+    showToast("🗑️ ลบกลุ่มแล้ว");
+}
+
+function removeItemFromGroup(group, item) {
+    if (!customGroups[group]) return;
+    customGroups[group] = customGroups[group].filter(i => i !== item);
+    saveGroups();
+    renderGroupManagerList();
+}
+
+function addItemToGroupFromInput(group) {
+    const input = document.querySelector(`.group-item-input[data-group="${CSS.escape(group)}"]`);
+    if (!input) return;
+    const val = input.value.trim();
+    if (!val) return;
+
+    if (!customGroups[group]) customGroups[group] = [];
+    if (customGroups[group].some(i => i.toLowerCase() === val.toLowerCase())) {
+        showToast("⚠️ มีรายการนี้ในกลุ่มอยู่แล้ว");
+        return;
+    }
+
+    customGroups[group].push(val);
+    saveGroups();
+    renderGroupManagerList();
+}
+
+function addGroupFromInput() {
+    const input = document.getElementById("inputNewGroup");
+    const name = input.value.trim();
+    if (!name) return;
+
+    if (customGroups[name]) {
+        showToast("⚠️ มีกลุ่มนี้อยู่แล้ว");
+        return;
+    }
+
+    customGroups[name] = [];
+    saveGroups();
+    input.value = "";
+    renderGroupManagerList();
 }
 
 // ─── SETTINGS ────────────────────────────────────────────────────────────────

@@ -2024,6 +2024,165 @@ body.theme-mon .custom-select-wrapper select:focus {
     flex-shrink: 0;
 }
 
+/* ─── Chart card header (title + gear button) ─── */
+.chart-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.icon-btn-sm {
+    border: none;
+    background: var(--bg-surface);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.icon-btn-sm:active {
+    opacity: 0.7;
+}
+
+/* ─── Group Manager Sheet ─── */
+.group-manager-hint {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin: 0 0 14px;
+}
+
+.group-manager-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 42vh;
+    overflow-y: auto;
+    margin-bottom: 16px;
+}
+
+.group-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background-color: var(--bg-surface);
+    padding: 12px;
+}
+
+.group-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.group-card-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.group-delete-btn {
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    padding: 4px 8px;
+    border-radius: 50%;
+}
+
+.group-delete-btn:active {
+    color: var(--color-expense);
+    background-color: var(--color-expense-bg);
+}
+
+.group-chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.group-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 5px 6px 5px 12px;
+    font-size: 0.78rem;
+    color: var(--text-main);
+}
+
+.group-chip-empty {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.chip-remove {
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chip-remove:active {
+    color: var(--color-expense);
+    background-color: var(--color-expense-bg);
+}
+
+.group-add-item-row {
+    display: flex;
+    gap: 6px;
+}
+
+.group-add-item-row input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background-color: var(--bg-card);
+    font-family: var(--font-app);
+    font-size: 0.85rem;
+    color: var(--text-main);
+    outline: none;
+}
+
+.group-add-item-row input:focus {
+    border-color: var(--primary);
+}
+
+.group-item-add-btn {
+    border: none;
+    background-color: var(--primary);
+    color: #ffffff;
+    width: 34px;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.group-item-add-btn:active {
+    opacity: 0.85;
+}
+
 .chart-legend .legend-item.hidden {
     display: none !important;
 }
