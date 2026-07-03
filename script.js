@@ -241,29 +241,41 @@ function switchPane(pane) {
 }
 
 // ─── DATA LOADING ────────────────────────────────────────────────────────────
+const LOADING_STATUS_MESSAGES = [
+    "กำลังเชื่อมต่อ...",
+    "กำลังดึงข้อมูลจาก Google Sheets...",
+    "กำลังประมวลผลรายการ...",
+    "เกือบเสร็จแล้ว..."
+];
+const FETCH_TIMEOUT_MS = 25000; // ถ้าเกิน 25 วิยังไม่ตอบกลับ ถือว่า timeout
+
 async function loadData(force = false) {
-    showLoading(true);
+    if (!force && state.apiData) {
+        refreshCurrentPane();
+        return;
+    }
+
+    startLoadingScreen();
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
     try {
-        if (!force && state.apiData) {
-            showLoading(false);
-            refreshCurrentPane();
-            return;
-        }
-
-        const res = await fetch(API_URL + "?user=" + state.user + "&t=" + Date.now());
+        const res = await fetch(API_URL + "?user=" + state.user + "&t=" + Date.now(), { signal: controller.signal });
+        clearTimeout(timeoutId);
         if (!res.ok) throw new Error("HTTP " + res.status);
         const data = await res.json();
         if (data.error) throw new Error(data.error);
 
         state.apiData = data;
-        showLoading(false);
+        finishLoadingScreen(true);
         refreshCurrentPane();
 
     } catch (err) {
+        clearTimeout(timeoutId);
         console.error("loadData error:", err);
-        showLoading(false);
-        showToast("❌ โหลดข้อมูลไม่ได้ กด รีเฟรช อีกครั้ง");
+        const isTimeout = err.name === "AbortError";
+        finishLoadingScreen(false, isTimeout ? "เชื่อมต่อนานเกินไป ลองใหม่อีกครั้ง" : "โหลดข้อมูลไม่สำเร็จ ลองใหม่อีกครั้ง");
     }
 }
 
@@ -1191,19 +1203,72 @@ function checkReminders() {
 }
 
 // ─── LOADING / TOAST ─────────────────────────────────────────────────────────
-let loadingTimeout = null;
+let loadingProgressInterval = null;
+let loadingStatusInterval = null;
+let loadingCurrentPct = 0;
 
-function showLoading(show) {
-    // Insert a subtle loading bar at the top if not exists
-    let bar = document.getElementById("globalLoadingBar");
-    if (!bar) {
-        bar = document.createElement("div");
-        bar.id = "globalLoadingBar";
-        bar.style.cssText = "position:fixed;top:0;left:0;width:100%;height:3px;background:var(--primary);z-index:99999;transition:opacity 0.3s;";
-        document.body.prepend(bar);
-    }
-    bar.style.opacity = show ? "1" : "0";
+function startLoadingScreen() {
+    const screen = document.getElementById("appLoadingScreen");
+    const fill = document.getElementById("appLoadingProgressFill");
+    const pctEl = document.getElementById("appLoadingPercent");
+    const statusEl = document.getElementById("appLoadingStatus");
+    const retryBtn = document.getElementById("btnLoadingRetry");
+    if (!screen) return;
+
+    loadingCurrentPct = 0;
+    fill.style.width = "0%";
+    pctEl.textContent = "0%";
+    statusEl.textContent = LOADING_STATUS_MESSAGES[0];
+    retryBtn.classList.add("hidden");
+    screen.classList.remove("hidden", "error");
+
+    // จำลองแถบโหลดแบบไต่ขึ้นเรื่อยๆ (ช้าลงเรื่อยๆ) ค้างสูงสุดที่ 90% จนกว่าข้อมูลจะมาจริง
+    // เพราะเวลารอส่วนใหญ่คือ Apps Script ประมวลผลฝั่งเซิร์ฟเวอร์ ไม่ใช่ดาวน์โหลดไฟล์ วัด progress จริงไม่ได้
+    clearInterval(loadingProgressInterval);
+    loadingProgressInterval = setInterval(() => {
+        const remaining = 90 - loadingCurrentPct;
+        loadingCurrentPct += Math.max(0.3, remaining * 0.06);
+        if (loadingCurrentPct > 90) loadingCurrentPct = 90;
+        fill.style.width = loadingCurrentPct.toFixed(0) + "%";
+        pctEl.textContent = loadingCurrentPct.toFixed(0) + "%";
+    }, 200);
+
+    // สลับข้อความสถานะทุก ๆ 3 วิ ให้รู้สึกว่ายังทำงานอยู่ ไม่ใช่ค้าง
+    let statusIdx = 0;
+    clearInterval(loadingStatusInterval);
+    loadingStatusInterval = setInterval(() => {
+        statusIdx = (statusIdx + 1) % LOADING_STATUS_MESSAGES.length;
+        statusEl.textContent = LOADING_STATUS_MESSAGES[statusIdx];
+    }, 3000);
 }
+
+function finishLoadingScreen(success, errorMsg) {
+    clearInterval(loadingProgressInterval);
+    clearInterval(loadingStatusInterval);
+
+    const screen = document.getElementById("appLoadingScreen");
+    const fill = document.getElementById("appLoadingProgressFill");
+    const pctEl = document.getElementById("appLoadingPercent");
+    const statusEl = document.getElementById("appLoadingStatus");
+    const retryBtn = document.getElementById("btnLoadingRetry");
+    if (!screen) return;
+
+    if (success) {
+        fill.style.width = "100%";
+        pctEl.textContent = "100%";
+        statusEl.textContent = "เสร็จแล้ว!";
+        setTimeout(() => screen.classList.add("hidden"), 350);
+    } else {
+        screen.classList.add("error");
+        statusEl.textContent = errorMsg || "โหลดข้อมูลไม่สำเร็จ";
+        retryBtn.classList.remove("hidden");
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const retryBtn = document.getElementById("btnLoadingRetry");
+    if (retryBtn) retryBtn.addEventListener("click", () => loadData(true));
+});
 
 // ─── CUSTOM DIALOG (replaces native confirm/prompt/alert - unreliable in WebView) ──
 function showDialog({ title = "แจ้งเตือน", message = "", showInput = false, inputValue = "", showCancel = true, confirmText = "ตกลง", danger = false }) {

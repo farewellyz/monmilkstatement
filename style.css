@@ -2183,6 +2183,107 @@ body.theme-mon .custom-select-wrapper select:focus {
     opacity: 0.85;
 }
 
+/* ─── Full-screen Data Loading Overlay ─── */
+.app-loading-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    background-color: var(--bg-card, #ffffff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s;
+}
+
+.app-loading-screen.hidden {
+    display: none;
+}
+
+.app-loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    width: 78%;
+    max-width: 280px;
+    text-align: center;
+}
+
+.app-loading-spinner {
+    width: 44px;
+    height: 44px;
+    border: 4px solid var(--bg-surface, #eef0f4);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: app-loading-spin 0.8s linear infinite;
+    margin-bottom: 4px;
+}
+
+@keyframes app-loading-spin {
+    to { transform: rotate(360deg); }
+}
+
+.app-loading-progress-track {
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background-color: var(--bg-surface, #eef0f4);
+    overflow: hidden;
+}
+
+.app-loading-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-light, var(--primary)));
+    transition: width 0.2s ease-out;
+}
+
+.app-loading-screen.error .app-loading-progress-fill {
+    background: var(--color-expense);
+}
+
+.app-loading-percent {
+    margin: 0;
+    font-family: var(--font-app);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.app-loading-status {
+    margin: 0;
+    font-family: var(--font-app);
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    min-height: 1.2em;
+}
+
+.app-loading-screen.error .app-loading-status {
+    color: var(--color-expense);
+    font-weight: 600;
+}
+
+.app-loading-retry {
+    margin-top: 6px;
+    border: none;
+    background-color: var(--primary);
+    color: #ffffff;
+    padding: 10px 24px;
+    border-radius: var(--radius-md);
+    font-family: var(--font-app);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.app-loading-retry.hidden {
+    display: none;
+}
+
+.app-loading-retry:active {
+    opacity: 0.85;
+}
+
 .chart-legend .legend-item.hidden {
     display: none !important;
 }

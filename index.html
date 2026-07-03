@@ -10,6 +10,19 @@
 </head>
 <body>
 
+    <!-- 0. FULL-SCREEN DATA LOADING OVERLAY -->
+    <div id="appLoadingScreen" class="app-loading-screen hidden">
+        <div class="app-loading-content">
+            <div class="app-loading-spinner"></div>
+            <div class="app-loading-progress-track">
+                <div id="appLoadingProgressFill" class="app-loading-progress-fill" style="width:0%"></div>
+            </div>
+            <p id="appLoadingPercent" class="app-loading-percent">0%</p>
+            <p id="appLoadingStatus" class="app-loading-status">กำลังเชื่อมต่อ...</p>
+            <button id="btnLoadingRetry" class="app-loading-retry hidden">ลองใหม่อีกครั้ง</button>
+        </div>
+    </div>
+
     <!-- 1. LOGIN / USER SELECTION SCREEN OVERLAY (First-time user selection) -->
     <div id="loginScreen" class="login-screen">
         <div class="login-container">
