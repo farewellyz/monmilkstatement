@@ -285,13 +285,13 @@ const LOADING_STATUS_MESSAGES = [
 ];
 const FETCH_TIMEOUT_MS = 25000; // ถ้าเกิน 25 วิยังไม่ตอบกลับ ถือว่า timeout
 
-async function loadData(force = false) {
+async function loadData(force = false, silent = false) {
     if (!force && state.apiData) {
         refreshCurrentPane();
         return;
     }
 
-    startLoadingScreen();
+    if (!silent) startLoadingScreen();
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -304,14 +304,19 @@ async function loadData(force = false) {
         if (data.error) throw new Error(data.error);
 
         state.apiData = data;
-        finishLoadingScreen(true);
+        if (!silent) finishLoadingScreen(true);
         refreshCurrentPane();
 
     } catch (err) {
         clearTimeout(timeoutId);
         console.error("loadData error:", err);
         const isTimeout = err.name === "AbortError";
-        finishLoadingScreen(false, isTimeout ? "เชื่อมต่อนานเกินไป ลองใหม่อีกครั้ง" : "โหลดข้อมูลไม่สำเร็จ ลองใหม่อีกครั้ง");
+        if (!silent) {
+            finishLoadingScreen(false, isTimeout ? "เชื่อมต่อนานเกินไป ลองใหม่อีกครั้ง" : "โหลดข้อมูลไม่สำเร็จ ลองใหม่อีกครั้ง");
+        } else {
+            // โหลดเงียบๆ ไม่ต้องโชว์เต็มจอ แค่แจ้งเตือนแบบ toast พอ
+            showToast("⚠️ อัพเดตข้อมูลล่าสุดไม่สำเร็จ ลองรีเฟรชอีกครั้ง");
+        }
     }
 }
 
@@ -916,7 +921,7 @@ async function handleFormSubmit(e) {
 
         showToast(txId ? "✅ แก้ไขรายการสำเร็จ!" : "✅ บันทึกรายการสำเร็จ!");
         closeSheet();
-        await loadData(true);
+        await loadData(true, true);
 
     } catch (err) {
         console.error(err);
@@ -984,7 +989,7 @@ async function onDeleteClick() {
 
         showToast("🗑️ ลบรายการสำเร็จ!");
         closeDetailModal();
-        await loadData(true);
+        await loadData(true, true);
 
     } catch (err) {
         showToast("❌ ลบไม่สำเร็จ: " + err.message);
