@@ -2287,3 +2287,104 @@ body.theme-mon .custom-select-wrapper select:focus {
 .chart-legend .legend-item.hidden {
     display: none !important;
 }
+
+/* ─── Unclassified banner ─── */
+.unclassified-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 10px 12px;
+    background-color: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: var(--radius-md);
+}
+
+.unclassified-banner span {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #9a3412;
+}
+
+.unclassified-banner button {
+    border: none;
+    background-color: var(--primary);
+    color: #ffffff;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-family: var(--font-app);
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.unclassified-banner button:active {
+    opacity: 0.85;
+}
+
+/* ─── Quick Classify Sheet ─── */
+.qc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 55vh;
+    overflow-y: auto;
+    margin-bottom: 8px;
+}
+
+.qc-item {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background-color: var(--bg-surface);
+    padding: 12px;
+}
+
+.qc-item-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.qc-item-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.qc-item-amount {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--color-expense);
+}
+
+.qc-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.qc-chip {
+    border: 1px solid var(--border);
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-family: var(--font-app);
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.qc-chip:active {
+    background-color: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+}
+
+.qc-chip-new {
+    border-style: dashed;
+    color: var(--text-muted);
+}

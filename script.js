@@ -222,6 +222,13 @@ function setupEventListeners() {
     document.getElementById("inputNewGroup").addEventListener("keydown", (e) => {
         if (e.key === "Enter") { e.preventDefault(); addGroupFromInput(); }
     });
+
+    // Quick classify
+    document.getElementById("btnOpenQuickClassify").addEventListener("click", openQuickClassify);
+    document.getElementById("btnCloseQuickClassify").addEventListener("click", closeQuickClassify);
+    document.getElementById("quickClassifySheet").addEventListener("click", (e) => {
+        if (e.target === document.getElementById("quickClassifySheet")) closeQuickClassify();
+    });
 }
 
 // ─── NAVIGATION ─────────────────────────────────────────────────────────────
@@ -496,10 +503,23 @@ function renderCategoryBreakdown(txs, filter) {
 
     const relevant = txs.filter(t => useIncome ? t.amount > 0 : t.amount < 0);
     const sums = {};
+    const unclassifiedSums = {}; // { rawItemText: totalAmount } — เก็บไว้ให้หน้าจัดหมวดหมู่ด่วนใช้ต่อ
     relevant.forEach(t => {
         const cat = classifyItem(t.item);
         sums[cat] = (sums[cat] || 0) + Math.abs(t.amount);
+
+        if (cat === "อื่นๆ") {
+            const raw = (t.item || "").trim() || "(ไม่มีชื่อ)";
+            unclassifiedSums[raw] = (unclassifiedSums[raw] || 0) + Math.abs(t.amount);
+        }
     });
+
+    // เก็บไว้เป็น module-level state ให้หน้าจัดหมวดหมู่ด่วนดึงไปใช้โดยไม่ต้อง compute ซ้ำ
+    lastUnclassifiedItems = Object.entries(unclassifiedSums)
+        .map(([item, amount]) => ({ item, amount }))
+        .sort((a, b) => b.amount - a.amount);
+    lastUnclassifiedIsIncome = useIncome;
+    renderUnclassifiedBanner();
 
     const entries = Object.entries(sums).sort((a, b) => b[1] - a[1]);
     const total = entries.reduce((s, [, v]) => s + v, 0);
@@ -1107,6 +1127,86 @@ function addGroupFromInput() {
     saveGroups();
     input.value = "";
     renderGroupManagerList();
+}
+
+// ─── QUICK CLASSIFY (จัดหมวดหมู่ด่วนสำหรับรายการที่ยังไม่เข้ากลุ่ม) ────────────
+let lastUnclassifiedItems = []; // [{ item, amount }] ของเดือน/filter ที่ render ล่าสุด
+let lastUnclassifiedIsIncome = false;
+
+function renderUnclassifiedBanner() {
+    const banner = document.getElementById("unclassifiedBanner");
+    const textEl = document.getElementById("unclassifiedBannerText");
+    if (!banner || !textEl) return;
+
+    if (lastUnclassifiedItems.length === 0) {
+        banner.classList.add("hidden");
+        return;
+    }
+
+    banner.classList.remove("hidden");
+    textEl.textContent = `มี ${lastUnclassifiedItems.length} รายการยังไม่จัดหมวดหมู่`;
+}
+
+function openQuickClassify() {
+    renderQuickClassifyList();
+    document.getElementById("quickClassifySheet").classList.add("open");
+    document.body.style.overflow = "hidden";
+}
+
+function closeQuickClassify() {
+    document.getElementById("quickClassifySheet").classList.remove("open");
+    document.body.style.overflow = "";
+    renderSummaryPane(); // อัพเดตกราฟโดนัท/banner ให้ตรงกับการจัดหมวดหมู่ล่าสุด
+}
+
+function renderQuickClassifyList() {
+    const container = document.getElementById("quickClassifyList");
+    const groupNames = Object.keys(customGroups);
+
+    if (lastUnclassifiedItems.length === 0) {
+        container.innerHTML = `<p class="tx-empty">🎉 จัดหมวดหมู่ครบหมดแล้ว ไม่มีรายการค้าง</p>`;
+        return;
+    }
+
+    container.innerHTML = lastUnclassifiedItems.map(({ item, amount }) => `
+        <div class="qc-item" data-item="${item}">
+            <div class="qc-item-head">
+                <span class="qc-item-name">${item}</span>
+                <span class="qc-item-amount">${formatCurrency(amount)}</span>
+            </div>
+            <div class="qc-chip-row">
+                ${groupNames.map(g => `<button class="qc-chip" data-item="${item}" data-group="${g}">${CAT_ICONS[g] || "📁"} ${g}</button>`).join("")}
+                <button class="qc-chip qc-chip-new" data-item="${item}">+ กลุ่มใหม่</button>
+            </div>
+        </div>
+    `).join("");
+
+    container.querySelectorAll(".qc-chip:not(.qc-chip-new)").forEach(btn => {
+        btn.addEventListener("click", () => assignQuickItem(btn.dataset.item, btn.dataset.group));
+    });
+    container.querySelectorAll(".qc-chip-new").forEach(btn => {
+        btn.addEventListener("click", () => assignQuickItemToNewGroup(btn.dataset.item));
+    });
+}
+
+function assignQuickItem(item, group) {
+    if (!customGroups[group]) customGroups[group] = [];
+    if (!customGroups[group].some(i => i.toLowerCase() === item.toLowerCase())) {
+        customGroups[group].push(item);
+        saveGroups();
+    }
+    lastUnclassifiedItems = lastUnclassifiedItems.filter(x => x.item !== item);
+    renderUnclassifiedBanner();
+    renderQuickClassifyList();
+    showToast(`✅ "${item}" → ${group}`);
+}
+
+async function assignQuickItemToNewGroup(item) {
+    const name = await customPrompt(`ตั้งชื่อกลุ่มใหม่สำหรับ "${item}" (เช่น อาหาร)`, "", { title: "สร้างกลุ่มใหม่" });
+    if (!name || !name.trim()) return;
+    const groupName = name.trim();
+    if (!customGroups[groupName]) customGroups[groupName] = [];
+    assignQuickItem(item, groupName);
 }
 
 // ─── SETTINGS ────────────────────────────────────────────────────────────────
