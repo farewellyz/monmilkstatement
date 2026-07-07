@@ -179,6 +179,35 @@ function setupEventListeners() {
         });
     });
 
+    // เพิ่มหมวดหมู่ใหม่ได้ทันทีจาก dropdown ในฟอร์ม (ไม่ต้องออกไปหน้าตั้งค่า)
+    document.getElementById("formInputCategory").addEventListener("change", async (e) => {
+        const sel = e.target;
+        if (sel.value !== "__add_new__") {
+            formCategoryPrevValue = sel.value;
+            return;
+        }
+
+        const typeEl = document.querySelector("input[name='formType']:checked");
+        const type = typeEl ? typeEl.value : "expense";
+
+        const name = await customPrompt("ตั้งชื่อหมวดหมู่ใหม่ (เช่น ของฝาก)", "", { title: "เพิ่มหมวดหมู่ใหม่" });
+        if (!name || !name.trim()) {
+            sel.value = formCategoryPrevValue; // ยกเลิก -> กลับไปค่าเดิม
+            return;
+        }
+        const newCat = name.trim();
+
+        if (!CATEGORIES[type].includes(newCat)) {
+            CATEGORIES[type].push(newCat);
+            saveCategories();
+        }
+
+        updateCategoryOptions(type);
+        sel.value = newCat;
+        formCategoryPrevValue = newCat;
+        showToast(`✅ เพิ่มหมวดหมู่ "${newCat}" แล้ว`);
+    });
+
     document.getElementById("transactionForm").addEventListener("submit", handleFormSubmit);
 
     // Detail modal
@@ -812,6 +841,7 @@ function openAddSheet(type = "expense", txToEdit = null) {
         document.getElementById("formTxId").value = txToEdit.id;
         document.getElementById("formInputAmount").value = Math.abs(txToEdit.amount);
         document.getElementById("formInputCategory").value = txToEdit.item;
+        formCategoryPrevValue = document.getElementById("formInputCategory").value;
         document.getElementById("formInputNote").value = getTxNote(txToEdit);
 
         // Set datetime
@@ -835,10 +865,14 @@ function closeSheet() {
     state.editingTx = null;
 }
 
+let formCategoryPrevValue = "";
+
 function updateCategoryOptions(type) {
     const sel = document.getElementById("formInputCategory");
     const cats = CATEGORIES[type] || CATEGORIES.expense;
-    sel.innerHTML = cats.map(c => `<option value="${c}">${CAT_ICONS[c] || ""} ${c}</option>`).join("");
+    sel.innerHTML = cats.map(c => `<option value="${c}">${CAT_ICONS[c] || ""} ${c}</option>`).join("")
+        + `<option value="__add_new__">➕ เพิ่มหมวดหมู่ใหม่...</option>`;
+    formCategoryPrevValue = sel.value;
 }
 
 async function handleFormSubmit(e) {
