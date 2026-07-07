@@ -23,6 +23,15 @@
         </div>
     </div>
 
+    <!-- 0b. LANDSCAPE ORIENTATION BLOCKER -->
+    <div id="orientationBlocker" class="orientation-blocker">
+        <div class="orientation-blocker-content">
+            <span class="orientation-blocker-icon">📱</span>
+            <p>แอปนี้รองรับเฉพาะแนวตั้งเท่านั้น</p>
+            <p class="orientation-blocker-sub">กรุณาหมุนมือถือกลับเป็นแนวตั้ง</p>
+        </div>
+    </div>
+
     <!-- 1. LOGIN / USER SELECTION SCREEN OVERLAY (First-time user selection) -->
     <div id="loginScreen" class="login-screen">
         <div class="login-container">
@@ -305,6 +314,28 @@
                         </div>
                         <span class="chevron-right">&gt;</span>
                     </div>
+
+                    <div class="setting-item" id="btnSettingsGroupManager">
+                        <div class="setting-item-left">
+                            <div class="setting-icon bg-purple">🥧</div>
+                            <div class="setting-info">
+                                <strong>กลุ่มหมวดหมู่ (กราฟวงกลม)</strong>
+                                <span>ตั้งกลุ่มรวมรายการสำหรับกราฟสรุป</span>
+                            </div>
+                        </div>
+                        <span class="chevron-right">&gt;</span>
+                    </div>
+
+                    <div class="setting-item" id="btnSettingsNotify">
+                        <div class="setting-item-left">
+                            <div class="setting-icon bg-orange">🔔</div>
+                            <div class="setting-info">
+                                <strong>แจ้งเตือนประจำวัน</strong>
+                                <span id="txtNotifyStatus">เตือนเวลา 12:00, 18:00, 21:00</span>
+                            </div>
+                        </div>
+                        <span id="notifyToggleBadge" class="notify-toggle-badge off">ปิด</span>
+                    </div>
                 </div>
 
                 <div class="settings-group">
@@ -331,6 +362,8 @@
                         </div>
                     </div>
                 </div>
+
+                <p class="settings-footer">มิ้วม่อน Statement • v1.0</p>
             </section>
         </main>
 

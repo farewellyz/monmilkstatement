@@ -223,6 +223,8 @@ function setupEventListeners() {
     document.getElementById("btnReloadData").addEventListener("click", () => loadData(true));
     document.getElementById("btnEditBudget").addEventListener("click", editBudget);
     document.getElementById("btnManageCategories").addEventListener("click", openCategoryManager);
+    document.getElementById("btnSettingsGroupManager").addEventListener("click", openGroupManager);
+    document.getElementById("btnSettingsNotify").addEventListener("click", requestNotificationPermission);
 
     // Category manager sheet
     document.getElementById("btnCloseCategoryManager").addEventListener("click", closeCategoryManager);
@@ -1350,10 +1352,17 @@ async function requestNotificationPermission() {
 }
 
 function updateNotifyBadge() {
-    const badge = document.querySelector("#btnNotify .notify-badge");
-    if (!badge) return;
     const granted = ("Notification" in window) && Notification.permission === "granted";
-    badge.classList.toggle("hidden", granted); // ซ่อนจุดแดงถ้าเปิดแจ้งเตือนแล้ว
+
+    const badge = document.querySelector("#btnNotify .notify-badge");
+    if (badge) badge.classList.toggle("hidden", granted); // ซ่อนจุดแดงถ้าเปิดแจ้งเตือนแล้ว
+
+    const toggleBadge = document.getElementById("notifyToggleBadge");
+    if (toggleBadge) {
+        toggleBadge.textContent = granted ? "เปิด" : "ปิด";
+        toggleBadge.classList.toggle("on", granted);
+        toggleBadge.classList.toggle("off", !granted);
+    }
 }
 
 // ตั้งตัวจับเวลาเช็คทุก 30 วินาทีว่าถึงเวลาแจ้งเตือนหรือยัง
