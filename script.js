@@ -258,6 +258,12 @@ function setupEventListeners() {
     document.getElementById("quickClassifySheet").addEventListener("click", (e) => {
         if (e.target === document.getElementById("quickClassifySheet")) closeQuickClassify();
     });
+
+    // Category drilldown
+    document.getElementById("btnCloseDrilldown").addEventListener("click", closeCategoryDrilldown);
+    document.getElementById("categoryDrilldownSheet").addEventListener("click", (e) => {
+        if (e.target === document.getElementById("categoryDrilldownSheet")) closeCategoryDrilldown();
+    });
 }
 
 // ─── NAVIGATION ─────────────────────────────────────────────────────────────
@@ -538,21 +544,26 @@ function renderCategoryBreakdown(txs, filter) {
     const relevant = txs.filter(t => useIncome ? t.amount > 0 : t.amount < 0);
     const sums = {};
     const unclassifiedSums = {}; // { rawItemText: totalAmount } — เก็บไว้ให้หน้าจัดหมวดหมู่ด่วนใช้ต่อ
+    const itemsByCategory = {};  // { catName: { rawItemText: totalAmount } } — เก็บไว้ให้หน้า drilldown ใช้ต่อ
     relevant.forEach(t => {
         const cat = classifyItem(t.item);
         sums[cat] = (sums[cat] || 0) + Math.abs(t.amount);
 
+        const raw = (t.item || "").trim() || "(ไม่มีชื่อ)";
+        if (!itemsByCategory[cat]) itemsByCategory[cat] = {};
+        itemsByCategory[cat][raw] = (itemsByCategory[cat][raw] || 0) + Math.abs(t.amount);
+
         if (cat === "อื่นๆ") {
-            const raw = (t.item || "").trim() || "(ไม่มีชื่อ)";
             unclassifiedSums[raw] = (unclassifiedSums[raw] || 0) + Math.abs(t.amount);
         }
     });
 
-    // เก็บไว้เป็น module-level state ให้หน้าจัดหมวดหมู่ด่วนดึงไปใช้โดยไม่ต้อง compute ซ้ำ
+    // เก็บไว้เป็น module-level state ให้หน้าจัดหมวดหมู่ด่วน/drilldown ดึงไปใช้โดยไม่ต้อง compute ซ้ำ
     lastUnclassifiedItems = Object.entries(unclassifiedSums)
         .map(([item, amount]) => ({ item, amount }))
         .sort((a, b) => b.amount - a.amount);
     lastUnclassifiedIsIncome = useIncome;
+    lastItemsByCategory = itemsByCategory;
     renderUnclassifiedBanner();
 
     const entries = Object.entries(sums).sort((a, b) => b[1] - a[1]);
@@ -579,11 +590,13 @@ function renderCategoryBreakdown(txs, filter) {
 
         const li = document.createElement("li");
         li.className = "donut-legend-item";
+        li.dataset.cat = cat;
         li.innerHTML = `
             <span class="legend-dot" style="background:${color}"></span>
             <span class="legend-cat">${CAT_ICONS[cat] || "📌"} ${cat}</span>
             <span class="legend-pct">${pct.toFixed(0)}%</span>
         `;
+        li.addEventListener("click", () => openCategoryDrilldown(cat));
         legendEl.appendChild(li);
     });
 
@@ -1171,6 +1184,40 @@ function addGroupFromInput() {
 // ─── QUICK CLASSIFY (จัดหมวดหมู่ด่วนสำหรับรายการที่ยังไม่เข้ากลุ่ม) ────────────
 let lastUnclassifiedItems = []; // [{ item, amount }] ของเดือน/filter ที่ render ล่าสุด
 let lastUnclassifiedIsIncome = false;
+let lastItemsByCategory = {}; // { catName: { rawItemText: totalAmount } } — สำหรับหน้า drilldown
+
+function openCategoryDrilldown(cat) {
+    const sheet = document.getElementById("categoryDrilldownSheet");
+    const titleEl = document.getElementById("drilldownTitle");
+    const listEl = document.getElementById("drilldownList");
+    if (!sheet || !titleEl || !listEl) return;
+
+    titleEl.textContent = `${CAT_ICONS[cat] || "📌"} ${cat}`;
+
+    const itemMap = lastItemsByCategory[cat] || {};
+    const items = Object.entries(itemMap)
+        .map(([item, amount]) => ({ item, amount }))
+        .sort((a, b) => b.amount - a.amount);
+
+    if (items.length === 0) {
+        listEl.innerHTML = `<p class="tx-empty">ไม่มีรายการ</p>`;
+    } else {
+        listEl.innerHTML = items.map(({ item, amount }) => `
+            <div class="drilldown-item">
+                <span class="drilldown-item-name">${item}</span>
+                <span class="drilldown-item-amount">${formatCurrency(amount)}</span>
+            </div>
+        `).join("");
+    }
+
+    sheet.classList.add("open");
+    document.body.style.overflow = "hidden";
+}
+
+function closeCategoryDrilldown() {
+    document.getElementById("categoryDrilldownSheet").classList.remove("open");
+    document.body.style.overflow = "";
+}
 
 function renderUnclassifiedBanner() {
     const banner = document.getElementById("unclassifiedBanner");

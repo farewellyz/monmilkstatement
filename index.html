@@ -491,6 +491,23 @@
         </div>
     </div>
 
+    <!-- 3e. CATEGORY DRILLDOWN SLIDE-UP BOTTOM SHEET -->
+    <div id="categoryDrilldownSheet" class="bottom-sheet-overlay">
+        <div class="bottom-sheet">
+            <div class="sheet-header">
+                <div class="drag-handle"></div>
+                <h3 id="drilldownTitle">หมวดหมู่</h3>
+                <button id="btnCloseDrilldown" class="close-btn" aria-label="ปิด">
+                    <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
+            </div>
+
+            <div id="drilldownList" class="drilldown-list">
+                <!-- Dynamic items -->
+            </div>
+        </div>
+    </div>
+
     <!-- 4. TRANSACTION DETAIL & ACTION MODAL -->
     <div id="txDetailModal" class="bottom-sheet-overlay">
         <div class="bottom-sheet detail-sheet">
