@@ -107,6 +107,7 @@ function loginAs(user) {
     const now = new Date();
     state.summaryMonth = { year: now.getFullYear(), month: now.getMonth() };
     state.budget = parseInt(localStorage.getItem("budget_amount") || "10000");
+    document.getElementById("txtSettingBudget").textContent = formatCurrency(state.budget) + "/เดือน";
 
     setupEventListeners();
     loadData();
@@ -802,7 +803,7 @@ function renderHistoryPane() {
     // Apply search
     if (state.historySearch) {
         txs = txs.filter(t => 
-            t.item.toLowerCase().includes(state.historySearch) ||
+            (t.item || "").toLowerCase().includes(state.historySearch) ||
             (t.note || "").toLowerCase().includes(state.historySearch)
         );
     }
@@ -945,7 +946,8 @@ async function handleFormSubmit(e) {
     const typeEl    = document.querySelector("input[name='formType']:checked");
     const txId      = document.getElementById("formTxId").value;
 
-    if (isNaN(amount) || amount <= 0 || !category) return;
+    if (isNaN(amount) || amount <= 0) { showToast("⚠️ กรุณากรอกจำนวนเงินให้ถูกต้อง"); return; }
+    if (!category) { showToast("⚠️ กรุณาเลือกหมวดหมู่"); return; }
 
     const finalAmt = typeEl.value === "expense" ? -Math.abs(amount) : Math.abs(amount);
 
@@ -961,7 +963,8 @@ async function handleFormSubmit(e) {
             item: category,
             note: note,
             amount: finalAmt,
-            date: dateStr ? new Date(dateStr).toISOString() : new Date().toISOString()
+            date: dateStr ? new Date(dateStr).toISOString() : new Date().toISOString(),
+            budget: state.budget // ส่งงบประมาณที่ตั้งในแอปไปด้วย ให้ backend เช็คแจ้งเตือน LINE ตรงกับที่เห็นในแอป
         };
         if (txId) payload.id = txId;
 
@@ -1037,7 +1040,7 @@ async function onDeleteClick() {
         const res = await fetch(API_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain" },
-            body: JSON.stringify({ action: "delete", user: state.user, id: currentDetailTx.id })
+            body: JSON.stringify({ action: "delete", user: state.user, id: currentDetailTx.id, budget: state.budget })
         });
         const result = await res.json();
         if (!result.success) throw new Error(result.error || "ผิดพลาด");
@@ -1456,6 +1459,10 @@ async function logout() {
     document.getElementById("appLayout").classList.add("hidden");
     document.getElementById("loginScreen").classList.remove("hidden");
     document.body.className = "";
+    // ล้างสีธีมที่ตั้งไว้ผ่าน inline style ด้วย ไม่งั้นสีธีมของคนก่อนหน้าจะค้างอยู่บนหน้า login
+    ["--primary", "--primary-light", "--primary-hover", "--primary-gradient", "--primary-gradient-soft"].forEach(prop => {
+        document.body.style.removeProperty(prop);
+    });
 }
 
 async function editBudget() {
