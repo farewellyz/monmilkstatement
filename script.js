@@ -89,10 +89,15 @@ function loginAs(user) {
     const info = USER_INFO[user];
     document.body.className = info.theme;
 
-    // Apply user info to header
-    document.getElementById("greetUserName").textContent = info.displayName;
-    document.getElementById("avatarLetter").textContent = info.avatar;
-    document.getElementById("txtProfileName").textContent = info.displayName;
+    const displayName = getUserDisplayName(user);
+    const avatar = getUserAvatar(user);
+
+    // Apply user info to header (ใช้ชื่อ/avatar ที่ผู้ใช้ปรับแต่งเองถ้ามี ไม่งั้น fallback ค่าเริ่มต้น)
+    document.getElementById("greetUserName").textContent = displayName;
+    document.getElementById("avatarLetter").textContent = avatar;
+    document.getElementById("txtProfileName").innerHTML = `${displayName} <span class="edit-pencil">✏️</span>`;
+
+    applyThemeColor(getUserThemeColor(user));
 
     // Hide login, show app
     document.getElementById("loginScreen").classList.add("hidden");
@@ -225,6 +230,21 @@ function setupEventListeners() {
     document.getElementById("btnManageCategories").addEventListener("click", openCategoryManager);
     document.getElementById("btnSettingsGroupManager").addEventListener("click", openGroupManager);
     document.getElementById("btnSettingsNotify").addEventListener("click", requestNotificationPermission);
+
+    // Profile customization
+    document.getElementById("avatarLetter").addEventListener("click", openAvatarPicker);
+    document.getElementById("btnCloseAvatarPicker").addEventListener("click", closeAvatarPicker);
+    document.getElementById("avatarPickerSheet").addEventListener("click", (e) => {
+        if (e.target === document.getElementById("avatarPickerSheet")) closeAvatarPicker();
+    });
+
+    document.getElementById("txtProfileName").addEventListener("click", promptEditDisplayName);
+
+    document.getElementById("btnSettingsTheme").addEventListener("click", openThemePicker);
+    document.getElementById("btnCloseThemePicker").addEventListener("click", closeThemePicker);
+    document.getElementById("themePickerSheet").addEventListener("click", (e) => {
+        if (e.target === document.getElementById("themePickerSheet")) closeThemePicker();
+    });
 
     // Category manager sheet
     document.getElementById("btnCloseCategoryManager").addEventListener("click", closeCategoryManager);
@@ -377,7 +397,12 @@ function renderHomePane() {
     const recent = [...monthTxs].sort((a, b) => b.rawDate - a.rawDate).slice(0, 5);
     const list = document.getElementById("homeTransactionList");
     list.innerHTML = recent.length === 0
-        ? `<li class="tx-empty">ยังไม่มีรายการในเดือนนี้</li>`
+        ? `<li class="empty-state">
+               <span class="empty-state-icon">📝</span>
+               <p class="empty-state-title">ยังไม่มีรายการในเดือนนี้</p>
+               <p class="empty-state-sub">เริ่มบันทึกรายรับ-รายจ่ายกันเถอะ</p>
+               <button class="empty-state-btn" onclick="openAddSheet('expense')">+ เพิ่มรายการแรก</button>
+           </li>`
         : recent.map(tx => renderTxItem(tx)).join("");
 
     // Attach click listeners
@@ -574,7 +599,10 @@ function renderCategoryBreakdown(txs, filter) {
     if (entries.length === 0 || total === 0) {
         donutEl.style.background = "var(--bg-surface)";
         centerLabel.textContent = "฿0";
-        legendEl.innerHTML = `<li class="tx-empty">ยังไม่มีข้อมูล</li>`;
+        legendEl.innerHTML = `<li class="empty-state">
+            <span class="empty-state-icon">🥧</span>
+            <p class="empty-state-title">ยังไม่มีข้อมูลเดือนนี้</p>
+        </li>`;
         return null;
     }
 
@@ -738,9 +766,9 @@ function renderFamilyCompare(year, month, filter = "combined") {
         const li = document.createElement("li");
         li.className = "compare-item";
         li.innerHTML = `
-            <div class="compare-avatar ${u}">${info.avatar}</div>
+            <div class="compare-avatar ${u}">${getUserAvatar(u)}</div>
             <div class="compare-info">
-                <strong>${info.displayName}</strong>
+                <strong>${getUserDisplayName(u)}</strong>
                 <span>รับ ${formatCurrency(income)} / จ่าย ${formatCurrency(expense)}</span>
             </div>
             <div class="compare-balance ${headlineCls}">${headline}</div>
@@ -795,7 +823,19 @@ function renderHistoryPane() {
     container.innerHTML = "";
 
     if (Object.keys(groups).length === 0) {
-        container.innerHTML = `<div class="tx-empty">ไม่มีรายการที่ตรงกัน</div>`;
+        const isFiltering = !!state.historySearch || state.historyFilter !== "all";
+        container.innerHTML = isFiltering
+            ? `<div class="empty-state">
+                   <span class="empty-state-icon">🔍</span>
+                   <p class="empty-state-title">ไม่พบรายการที่ตรงกัน</p>
+                   <p class="empty-state-sub">ลองเปลี่ยนคำค้นหาหรือตัวกรองดูนะ</p>
+               </div>`
+            : `<div class="empty-state">
+                   <span class="empty-state-icon">🧾</span>
+                   <p class="empty-state-title">ยังไม่มีรายการเลย</p>
+                   <p class="empty-state-sub">เริ่มบันทึกรายรับ-รายจ่ายแรกกันเลย</p>
+                   <button class="empty-state-btn" onclick="openAddSheet('expense')">+ เพิ่มรายการแรก</button>
+               </div>`;
         return;
     }
 
@@ -1182,6 +1222,115 @@ function addGroupFromInput() {
     input.value = "";
     renderGroupManagerList();
 }
+
+const AVATAR_OPTIONS = ["😀","😎","🥳","🥰","😺","🐶","🐱","🦊","🐻","🐼","🐨","🦁","🐯","🐰","🐹","🦄","🐸","🐷","🐵","🦉"];
+
+const THEME_PRESETS = [
+    { id: "blue",   name: "ฟ้า",    primary: "#2563eb", light: "#eff6ff", hover: "#1d4ed8", accent: "#93c5fd" },
+    { id: "pink",   name: "ชมพู",   primary: "#f43f5e", light: "#fff1f2", hover: "#e11d48", accent: "#fda4af" },
+    { id: "green",  name: "เขียว",  primary: "#16a34a", light: "#f0fdf4", hover: "#15803d", accent: "#86efac" },
+    { id: "purple", name: "ม่วง",   primary: "#7c3aed", light: "#f5f3ff", hover: "#6d28d9", accent: "#c4b5fd" },
+    { id: "orange", name: "ส้ม",    primary: "#ea580c", light: "#fff7ed", hover: "#c2410c", accent: "#fdba74" },
+    { id: "teal",   name: "ฟ้าเขียว", primary: "#0d9488", light: "#f0fdfa", hover: "#0f766e", accent: "#5eead4" },
+    { id: "gold",   name: "ทอง",    primary: "#ca8a04", light: "#fefce8", hover: "#a16207", accent: "#fde047" },
+    { id: "gray",   name: "เทา",    primary: "#475569", light: "#f8fafc", hover: "#334155", accent: "#cbd5e1" }
+];
+
+// ─── PROFILE CUSTOMIZATION (ชื่อ/avatar/ธีมสี ต่อผู้ใช้ เก็บใน localStorage) ───
+function getUserDisplayName(user) {
+    return localStorage.getItem(`custom_name_${user}`) || USER_INFO[user].displayName;
+}
+function setUserDisplayName(user, name) {
+    localStorage.setItem(`custom_name_${user}`, name);
+}
+
+function getUserAvatar(user) {
+    return localStorage.getItem(`custom_avatar_${user}`) || USER_INFO[user].avatar;
+}
+function setUserAvatar(user, emoji) {
+    localStorage.setItem(`custom_avatar_${user}`, emoji);
+}
+
+function getUserThemeColor(user) {
+    const saved = localStorage.getItem(`custom_theme_${user}`);
+    return THEME_PRESETS.find(p => p.id === saved) || THEME_PRESETS.find(p => p.id === (user === "mon" ? "blue" : "pink"));
+}
+function setUserThemeColor(user, presetId) {
+    localStorage.setItem(`custom_theme_${user}`, presetId);
+}
+
+function applyThemeColor(preset) {
+    const root = document.body.style;
+    root.setProperty("--primary", preset.primary);
+    root.setProperty("--primary-light", preset.light);
+    root.setProperty("--primary-hover", preset.hover);
+    root.setProperty("--primary-gradient", `linear-gradient(135deg, ${preset.primary}, ${preset.accent})`);
+    root.setProperty("--primary-gradient-soft", `linear-gradient(135deg, ${preset.light}, ${preset.accent}33)`);
+
+    const dot = document.getElementById("themeColorDot");
+    if (dot) dot.style.backgroundColor = preset.primary;
+}
+
+async function promptEditDisplayName() {
+    const current = getUserDisplayName(state.user);
+    const name = await customPrompt("ชื่อที่แสดง", current, { title: "แก้ไขชื่อที่แสดง" });
+    if (!name || !name.trim()) return;
+
+    setUserDisplayName(state.user, name.trim());
+    document.getElementById("greetUserName").textContent = name.trim();
+    document.getElementById("txtProfileName").innerHTML = `${name.trim()} <span class="edit-pencil">✏️</span>`;
+    showToast("✅ เปลี่ยนชื่อแล้ว");
+}
+
+function openAvatarPicker() {
+    const grid = document.getElementById("avatarPickerGrid");
+    const current = getUserAvatar(state.user);
+    grid.innerHTML = AVATAR_OPTIONS.map(emoji => `
+        <button class="avatar-picker-btn ${emoji === current ? "active" : ""}" data-emoji="${emoji}">${emoji}</button>
+    `).join("");
+    grid.querySelectorAll(".avatar-picker-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const emoji = btn.dataset.emoji;
+            setUserAvatar(state.user, emoji);
+            document.getElementById("avatarLetter").textContent = emoji;
+            closeAvatarPicker();
+            showToast("✅ เปลี่ยนรูปโปรไฟล์แล้ว");
+        });
+    });
+    document.getElementById("avatarPickerSheet").classList.add("open");
+    document.body.style.overflow = "hidden";
+}
+function closeAvatarPicker() {
+    document.getElementById("avatarPickerSheet").classList.remove("open");
+    document.body.style.overflow = "";
+}
+
+function openThemePicker() {
+    const grid = document.getElementById("themePickerGrid");
+    const current = getUserThemeColor(state.user);
+    grid.innerHTML = THEME_PRESETS.map(p => `
+        <button class="theme-picker-item ${p.id === current.id ? "active" : ""}" data-id="${p.id}">
+            <span class="theme-picker-swatch" style="background-color:${p.primary}"></span>
+            <span>${p.name}</span>
+        </button>
+    `).join("");
+    grid.querySelectorAll(".theme-picker-item").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const preset = THEME_PRESETS.find(p => p.id === btn.dataset.id);
+            setUserThemeColor(state.user, preset.id);
+            applyThemeColor(preset);
+            closeThemePicker();
+            showToast(`✅ เปลี่ยนธีมเป็นสี${preset.name}แล้ว`);
+        });
+    });
+    document.getElementById("themePickerSheet").classList.add("open");
+    document.body.style.overflow = "hidden";
+}
+function closeThemePicker() {
+    document.getElementById("themePickerSheet").classList.remove("open");
+    document.body.style.overflow = "";
+}
+
 
 // ─── QUICK CLASSIFY (จัดหมวดหมู่ด่วนสำหรับรายการที่ยังไม่เข้ากลุ่ม) ────────────
 let lastUnclassifiedItems = []; // [{ item, amount }] ของเดือน/filter ที่ render ล่าสุด

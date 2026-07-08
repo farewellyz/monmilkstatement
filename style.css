@@ -1699,6 +1699,180 @@ body.theme-mon .custom-select-wrapper select:focus {
     font-size: 0.9rem;
 }
 
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 36px 20px;
+    gap: 6px;
+}
+
+.empty-state-icon {
+    font-size: 2.4rem;
+    margin-bottom: 6px;
+}
+
+.empty-state-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.empty-state-sub {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin: 0 0 10px;
+}
+
+.empty-state-btn {
+    border: none;
+    background-color: var(--primary);
+    color: #ffffff;
+    padding: 9px 20px;
+    border-radius: 999px;
+    font-family: var(--font-app);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.empty-state-btn:active {
+    opacity: 0.85;
+}
+
+/* ─── Skeleton Loading (shimmer placeholder ก่อนเนื้อหาจริงมา) ─── */
+@keyframes skeleton-shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.skeleton-block {
+    background: linear-gradient(90deg, var(--bg-surface) 25%, #eef0f4 37%, var(--bg-surface) 63%);
+    background-size: 400% 100%;
+    animation: skeleton-shimmer 1.4s ease infinite;
+    border-radius: var(--radius-md);
+}
+
+.skeleton-tx-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 4px;
+}
+
+.skeleton-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.skeleton-lines {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.skeleton-line {
+    height: 10px;
+    border-radius: 5px;
+}
+
+.skeleton-line.w-60 { width: 60%; }
+.skeleton-line.w-40 { width: 40%; }
+
+.skeleton-amount {
+    width: 54px;
+    height: 14px;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+/* ─── Profile edit affordances ─── */
+.profile-avatar-large,
+#txtProfileName {
+    cursor: pointer;
+}
+
+.edit-pencil {
+    font-size: 0.7rem;
+    opacity: 0.6;
+}
+
+.theme-color-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: var(--primary);
+    border: 2px solid var(--bg-card);
+    box-shadow: 0 0 0 1px var(--border);
+    flex-shrink: 0;
+}
+
+/* ─── Avatar Picker ─── */
+.avatar-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    padding-bottom: 8px;
+}
+
+.avatar-picker-btn {
+    aspect-ratio: 1;
+    border: 1px solid var(--border);
+    background-color: var(--bg-surface);
+    border-radius: 50%;
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.avatar-picker-btn.active {
+    border-color: var(--primary);
+    background-color: var(--bg-card);
+    box-shadow: 0 0 0 2px var(--primary);
+}
+
+/* ─── Theme Color Picker ─── */
+.theme-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    padding-bottom: 8px;
+}
+
+.theme-picker-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: var(--font-app);
+}
+
+.theme-picker-swatch {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+}
+
+.theme-picker-item.active .theme-picker-swatch {
+    border-color: var(--text-main);
+}
+
+.theme-picker-item span {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
 
 /* --- 8. CUSTOM DIALOG (replaces native confirm/prompt/alert) --- */
 .dialog-overlay {
