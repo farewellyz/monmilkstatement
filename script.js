@@ -1459,7 +1459,7 @@ async function logout() {
 }
 
 async function editBudget() {
-    const newBudget = await customPrompt("ตั้งงบประมาณรายเดือน (บาท):", state.budget, { title: "งบประมาณรายเดือน" });
+    const newBudget = await customPrompt("ตั้งงบประมาณรายเดือน (บาท):", state.budget, { title: "งบประมาณรายเดือน", inputMode: "decimal" });
     if (newBudget === null) return;
     const val = parseFloat(newBudget);
     if (isNaN(val) || val < 0) { await customAlert("กรุณากรอกตัวเลขที่ถูกต้อง"); return; }
@@ -1615,7 +1615,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ─── CUSTOM DIALOG (replaces native confirm/prompt/alert - unreliable in WebView) ──
-function showDialog({ title = "แจ้งเตือน", message = "", showInput = false, inputValue = "", showCancel = true, confirmText = "ตกลง", danger = false }) {
+function showDialog({ title = "แจ้งเตือน", message = "", showInput = false, inputValue = "", showCancel = true, confirmText = "ตกลง", danger = false, inputMode = "text" }) {
     return new Promise((resolve) => {
         const overlay = document.getElementById("customDialogOverlay");
         const titleEl = document.getElementById("dialogTitle");
@@ -1633,6 +1633,9 @@ function showDialog({ title = "แจ้งเตือน", message = "", showI
         if (showInput) {
             inputEl.classList.remove("hidden");
             inputEl.value = inputValue;
+            // สลับแป้นพิมพ์ตามชนิดข้อมูล: "text" = แป้นตัวอักษรปกติ (ค่าเริ่มต้น),
+            // "decimal" = แป้นตัวเลขเฉพาะ dialog ที่ขอกรอกจำนวนเงินจริงๆ เช่นตั้งงบประมาณ
+            inputEl.setAttribute("inputmode", inputMode);
         } else {
             inputEl.classList.add("hidden");
         }
@@ -1663,7 +1666,7 @@ function customConfirm(message, opts = {}) {
 }
 
 function customPrompt(message, defaultValue = "", opts = {}) {
-    return showDialog({ title: opts.title || "กรอกข้อมูล", message, showInput: true, inputValue: defaultValue, showCancel: true, confirmText: opts.confirmText || "บันทึก" });
+    return showDialog({ title: opts.title || "กรอกข้อมูล", message, showInput: true, inputValue: defaultValue, showCancel: true, confirmText: opts.confirmText || "บันทึก", inputMode: opts.inputMode || "text" });
 }
 
 function customAlert(message, opts = {}) {
